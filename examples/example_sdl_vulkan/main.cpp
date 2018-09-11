@@ -15,8 +15,8 @@
 #define IMGUI_VULKAN_DEBUG_REPORT
 #endif
 
-static uint32_t						g_MinImageCount = 2;
-static bool							g_PendingSwapchainRebuild = false;
+static uint32_t                     g_MinImageCount = 2;
+static bool                         g_PendingSwapchainRebuild = false;
 static VkAllocationCallbacks*       g_Allocator = NULL;
 static VkInstance                   g_Instance = VK_NULL_HANDLE;
 static VkPhysicalDevice             g_PhysicalDevice = VK_NULL_HANDLE;
@@ -204,7 +204,7 @@ static void SetupVulkanWindowData(ImGui_ImplVulkanH_WindowData* wd, VkSurfaceKHR
 
     // Create SwapChain, RenderPass, Framebuffer, etc.
     ImGui_ImplVulkanH_CreateWindowDataSwapChainAndFramebuffer(g_PhysicalDevice, g_Device, wd, g_Allocator, width, height, g_MinImageCount);
-	ImGui_ImplVulkanH_CreateWindowDataCommandBuffers(g_PhysicalDevice, g_Device, g_QueueFamily, wd, g_Allocator);
+    ImGui_ImplVulkanH_CreateWindowDataCommandBuffers(g_PhysicalDevice, g_Device, g_QueueFamily, wd, g_Allocator);
 }
 
 static void CleanupVulkan()
@@ -225,18 +225,18 @@ static void CleanupVulkan()
 
 static void FrameRender(ImGui_ImplVulkanH_WindowData* wd)
 {
-	VkResult err;
+    VkResult err;
 
-	VkSemaphore& image_acquired_semaphore  = wd->Frames[wd->FrameIndex].ImageAcquiredSemaphore;
-	err = vkAcquireNextImageKHR(g_Device, wd->Swapchain, UINT64_MAX, image_acquired_semaphore, VK_NULL_HANDLE, &wd->FrameIndex);
-	check_vk_result(err);
+    VkSemaphore& image_acquired_semaphore  = wd->Frames[wd->FrameIndex].ImageAcquiredSemaphore;
+    err = vkAcquireNextImageKHR(g_Device, wd->Swapchain, UINT64_MAX, image_acquired_semaphore, VK_NULL_HANDLE, &wd->FrameIndex);
+    check_vk_result(err);
 
     ImGui_ImplVulkanH_FrameData* fd = &wd->Frames[wd->FrameIndex];
     {
-		err = vkWaitForFences(g_Device, 1, &fd->Fence, VK_TRUE, UINT64_MAX);	// wait indefinitely instead of periodically checking
+        err = vkWaitForFences(g_Device, 1, &fd->Fence, VK_TRUE, UINT64_MAX);    // wait indefinitely instead of periodically checking
         check_vk_result(err);
 
-		err = vkResetFences(g_Device, 1, &fd->Fence);
+        err = vkResetFences(g_Device, 1, &fd->Fence);
         check_vk_result(err);
     }
     {
@@ -252,7 +252,7 @@ static void FrameRender(ImGui_ImplVulkanH_WindowData* wd)
         VkRenderPassBeginInfo info = {};
         info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
         info.renderPass = wd->RenderPass;
-		info.framebuffer = wd->Framebuffer[wd->FrameIndex];
+        info.framebuffer = wd->Framebuffer[wd->FrameIndex];
         info.renderArea.extent.width = wd->Width;
         info.renderArea.extent.height = wd->Height;
         info.clearValueCount = 1;
@@ -260,17 +260,17 @@ static void FrameRender(ImGui_ImplVulkanH_WindowData* wd)
         vkCmdBeginRenderPass(fd->CommandBuffer, &info, VK_SUBPASS_CONTENTS_INLINE);
     }
 
-	// Record Imgui Draw Data and draw funcs into command buffer
-	ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), fd->CommandBuffer);
+    // Record Imgui Draw Data and draw funcs into command buffer
+    ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), fd->CommandBuffer);
 
-	// Submit command buffer
+    // Submit command buffer
     vkCmdEndRenderPass(fd->CommandBuffer);
     {
         VkPipelineStageFlags wait_stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
         VkSubmitInfo info = {};
         info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
         info.waitSemaphoreCount = 1;
-		info.pWaitSemaphores = &image_acquired_semaphore;
+        info.pWaitSemaphores = &image_acquired_semaphore;
         info.pWaitDstStageMask = &wait_stage;
         info.commandBufferCount = 1;
         info.pCommandBuffers = &fd->CommandBuffer;
@@ -293,23 +293,18 @@ static void FramePresent(ImGui_ImplVulkanH_WindowData* wd)
     info.pWaitSemaphores = &fd->RenderCompleteSemaphore;
     info.swapchainCount = 1;
     info.pSwapchains = &wd->Swapchain;
-	info.pImageIndices = &wd->FrameIndex;
-	VkResult err = vkQueuePresentKHR(g_Queue, &info);
+    info.pImageIndices = &wd->FrameIndex;
+    VkResult err = vkQueuePresentKHR(g_Queue, &info);
     check_vk_result(err);
 }
 
 static void RebuildSwapChain(int width, int height)
 {
-	ImGui_ImplVulkanH_CreateWindowDataSwapChainAndFramebuffer(g_PhysicalDevice, g_Device, &g_WindowData, g_Allocator, width, height, g_MinImageCount);
-	ImGui_ImplVulkanH_CreateWindowDataCommandBuffers(g_PhysicalDevice, g_Device, g_QueueFamily, &g_WindowData, g_Allocator);
-	ImGui_ImplVulkan_SetQueuedFramesCount(g_WindowData.BackBufferCount);
-	g_WindowData.FrameIndex = 0;
-	g_PendingSwapchainRebuild = false;
-}
-
-static void RebuildSwapChain()
-{
-	RebuildSwapChain(g_WindowData.Width, g_WindowData.Height);
+    ImGui_ImplVulkanH_CreateWindowDataSwapChainAndFramebuffer(g_PhysicalDevice, g_Device, &g_WindowData, g_Allocator, width, height, g_MinImageCount);
+    ImGui_ImplVulkanH_CreateWindowDataCommandBuffers(g_PhysicalDevice, g_Device, g_QueueFamily, &g_WindowData, g_Allocator);
+    ImGui_ImplVulkan_SetQueuedFramesCount(g_WindowData.BackBufferCount);
+    g_WindowData.FrameIndex = 0;
+    g_PendingSwapchainRebuild = false;
 }
 
 int main(int, char**)
@@ -370,7 +365,7 @@ int main(int, char**)
     init_info.PipelineCache = g_PipelineCache;
     init_info.DescriptorPool = g_DescriptorPool;
     init_info.Allocator = g_Allocator;
-	init_info.QueuedFrames = wd->BackBufferCount;
+    init_info.QueuedFrames = wd->BackBufferCount;
     init_info.CheckVkResultFn = check_vk_result;
     ImGui_ImplVulkan_Init(&init_info, wd->RenderPass);
 
@@ -439,11 +434,11 @@ int main(int, char**)
             if (event.type == SDL_QUIT)
                 done = true;
             if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_RESIZED && event.window.windowID == SDL_GetWindowID(window))
-				RebuildSwapChain((int)event.window.data1, (int)event.window.data2);
+                RebuildSwapChain((int)event.window.data1, (int)event.window.data2);
         }
 
-		if (g_PendingSwapchainRebuild)
-			RebuildSwapChain();
+        if (g_PendingSwapchainRebuild)
+            RebuildSwapChain(g_WindowData.Width, g_WindowData.Height);
 
         // Start the Dear ImGui frame
         ImGui_ImplVulkan_NewFrame();
@@ -485,26 +480,26 @@ int main(int, char**)
             if (ImGui::Button("Close Me"))
                 show_another_window = false;
 
-			if (ImGui::Button("Increase"))
-			{
-				g_MinImageCount++;
-				g_PendingSwapchainRebuild = true;
-			}
+            if (ImGui::Button("Increase"))
+            {
+                g_MinImageCount++;
+                g_PendingSwapchainRebuild = true;
+            }
 
-			ImGui::SameLine();
-			if (ImGui::Button("Decrease"))
-			{
-				if (g_MinImageCount != 2)
-				{
-					g_MinImageCount--;
-					g_PendingSwapchainRebuild = true;
-				}
-			}
+            ImGui::SameLine();
+            if (ImGui::Button("Decrease"))
+            {
+                if (g_MinImageCount != 2)
+                {
+                    g_MinImageCount--;
+                    g_PendingSwapchainRebuild = true;
+                }
+            }
 
-			ImGui::SameLine();
-			ImGui::Text("Back Buffers: %i", g_MinImageCount);
+            ImGui::SameLine();
+            ImGui::Text("Back Buffers: %i", g_MinImageCount);
 
-			ImGui::Text("Frame Index %i", wd->FrameIndex);
+            ImGui::Text("Frame Index %i", wd->FrameIndex);
 
             ImGui::End();
         }
@@ -512,7 +507,7 @@ int main(int, char**)
         // Rendering
         ImGui::Render();
         memcpy(&wd->ClearValue.color.float32[0], &clear_color, 4 * sizeof(float));
-		FrameRender(wd);
+        FrameRender(wd);
 
         FramePresent(wd);
     }
